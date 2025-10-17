@@ -291,3 +291,24 @@ cd ~/EduNote/app
 source ../venv/bin/activate
 uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 
+DISCLAIMER *You must ensure the vm and the exact LLM Model you want*
+
+Clone and build
+
+git clone https://github.com/ggerganov/llama.cpp.git
+ ~/EduNote/llama.cpp
+cd ~/EduNote/llama.cpp
+cmake -B build -S . -GNinja -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+
+Verify binary
+
+ls -lh ~/EduNote/llama.cpp/build/main
+
+Download models
+
+wget --header="Authorization: Bearer <HF_TOKEN>"
+"https://huggingface.co/ggerganov/llama.cpp/resolve/master/models/tiny-llama.gguf
+"
+-O ~/EduNote/models/tinyllama.gguf
+
