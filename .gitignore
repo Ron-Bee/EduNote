@@ -1,0 +1,13 @@
+# Python virtual environment
+venv/
+*.pyc
+__pycache__/
+
+# Model files (users will download via script)
+models/alpaca/
+models/tinyllama/
+*.gguf
+
+# OS / editor files
+.DS_Store
+*.swp
