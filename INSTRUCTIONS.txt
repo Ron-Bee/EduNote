@@ -1,0 +1,40 @@
+EduNote Setup & Usage Instructions
+----------------------------------
+
+1. Clone EduNote repository with submodules:
+   git clone --recurse-submodules git@github.com:Ron-Bee/EduNote.git
+   cd EduNote
+   (If already cloned without submodules: git submodule update --init --recursive)
+
+2. Run the automated setup script:
+   chmod +x setup_edunote.sh
+   ./setup_edunote.sh
+
+   This will:
+   - Create directories and package layout
+   - Write Python wrappers and example runners
+   - Move any stray models into appropriate folders
+   - Set up a Python virtual environment and install dependencies
+   - Verify llama.cpp binary and model presence
+
+3. Activate virtual environment and run EduNote:
+   source ~/EduNote/venv/bin/activate
+   python3 ~/EduNote/run_edunote.py
+
+4. To exit virtual environment:
+   deactivate
+
+5. Adding models:
+   - Alpaca: ~/EduNote/models/alpaca/
+   - TinyLlama: ~/EduNote/models/tinyllama/
+   - Do not commit large GGUF files to repository.
+
+6. Editing paths:
+   - edunote_llm/llama_wrapper.py (binary/model defaults)
+   - edunote_llm/run_llama.py (example runner)
+
+7. Python dependencies:
+   - Installed automatically from requirements.txt or defaults:
+     huggingface-hub, fastapi, uvicorn, python-multipart, pdfminer.six, python-docx
+
+End of Instructions
