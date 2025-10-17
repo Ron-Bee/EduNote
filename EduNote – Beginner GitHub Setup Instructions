@@ -1,0 +1,85 @@
+EduNote – Beginner GitHub Setup Instructions
+
+Beginners setup instructions created by ChatGPT
+
+1. Clone the repository (with submodules)
+
+# Clone EduNote and initialize submodules
+git clone --recurse-submodules git@github.com:Ron-Bee/EduNote.git
+cd EduNote
+
+
+2. Check out the main branch
+
+# Make sure you are on main
+git checkout main
+
+
+3. Create and activate the Python virtual environment
+
+# Python 3.11 is recommended
+python3 -m venv venv
+source venv/bin/activate
+
+
+4. Install project dependencies
+
+pip install --upgrade pip
+pip install -r requirements.txt
+
+
+5. Build the Llama.cpp submodule
+
+# Navigate to submodule
+cd llama.cpp
+
+# Make build directory & compile using CMake + Ninja
+cmake -B build -S . -GNinja -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+
+# Back to project root
+cd ..
+
+
+6. Download the model(s) manually
+
+Large model files are excluded from GitHub. Example with TinyLlama:
+
+mkdir -p models
+wget --header="Authorization: Bearer <HF_TOKEN>" \
+"https://huggingface.co/ggerganov/llama.cpp/resolve/master/models/tiny-llama.gguf" \
+-O ./models/tinyllama.gguf
+
+
+7. Run the backend server
+
+cd app
+uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+
+
+8. Test API endpoints (optional)
+
+# Health check
+curl http://127.0.0.1:8080/
+
+# Upload & summarize
+curl -F "file=@/path/to/sample.pdf" http://127.0.0.1:8080/upload
+curl -X POST http://127.0.0.1:8080/summarize \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Your extracted text goes here."}'
+
+# Generate quiz
+curl -X POST http://127.0.0.1:8080/quiz \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Your extracted text goes here."}'
+
+
+Notes for beginners:
+
+Submodule initialization is critical — llama.cpp won’t work without it.
+
+Model files must be downloaded manually due to GitHub size limits.
+
+Virtual environment ensures dependencies are isolated.
+
+Port 8080 can be changed in uvicorn command if needed.
