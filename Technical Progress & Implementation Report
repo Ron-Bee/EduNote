@@ -312,3 +312,47 @@ wget --header="Authorization: Bearer <HF_TOKEN>"
 "
 -O ~/EduNote/models/tinyllama.gguf
 
+
+Explanation + Important notes
+
+Submodule vs. subtree: the commands above treat llama.cpp as a submodule. The parent repo stores a pointer (a commit hash) to the submodule repo; it does not contain the submodule files themselves. That keeps your repo small and avoids the GitHub pack limit issues.
+
+If you have changes inside llama.cpp that you want to include in your GitHub EduNote repo, you must:
+
+cd llama.cpp, commit and push those changes to the llama.cpp remote (you must have push rights to that repo).
+
+cd .., git add llama.cpp (this updates the pointer), commit and push the parent repo.
+
+Cloning for others: instruct contributors to clone with:
+
+git clone --recurse-submodules git@github.com:Ron-Bee/EduNote.git
+
+
+Or after cloning:
+
+git submodule update --init --recursive
+
+
+Updating submodules to latest upstream: to move the submodule pointer to a newer commit:
+
+cd llama.cpp
+git fetch origin
+git checkout main           # or the branch you want
+git pull --ff-only
+cd ..
+git add llama.cpp
+git commit -m "Update llama.cpp to latest upstream"
+git push origin main
+
+
+If you accidentally committed large model files, you must remove them from history (we covered orphan branch and filter-repo earlier). But given your .gitignore and prior work I believe models/ and venv/ are not tracked.
+
+CI / Android linking: when Android Studio or CI clones the repo, submodules must be fetched as above. Your setup script automates submodule initialization; still prefer --recurse-submodules when cloning.
+
+License: ensure you add the full MIT text (or chosen license) into LICENSE before committing.
+
+How to ensure every push updates the whole project (recommended workflow)
+
+Make code edits in parent repo (app/, edunote_llm/, README, INSTRUCTIONS, setup script).
+
+If you need to change the submodule commit, make changes inside llama.cpp, push those upstream, then update pointer in parent (see previous section).
