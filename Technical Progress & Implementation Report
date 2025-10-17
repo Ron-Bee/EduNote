@@ -1,0 +1,293 @@
+EduNote – Study Companion
+Technical Progress & Implementation Report
+Prepared by: Ron Baute
+ Platform: Ubuntu (WSL) + Android Studio + Python FastAPI
+ Project Goal: Develop an Android EdTech application (“EduNote”) that uses Llama.cpp for local or server-based summarization, document conversion, and quiz generation from uploaded study notes.
+
+1. Project Overview
+EduNote is designed to:
+Let students upload study notes in PDF, DOCX, or TXT formats.
+
+
+Summarize content via an LLM (TinyLlama or Phi models).
+
+
+Generate multiple-choice quizzes for active recall.
+
+
+Store results locally with optional future cloud sync.
+
+
+Run offline-first, with a FastAPI backend for testing and optional cloud operations.
+
+
+Core Concept:
+Upload → Summarize → Quiz → Track Progress
+
+2. Architectural Overview
+Layer
+Technology
+Function
+Frontend (Android)
+Kotlin + Jetpack Compose
+Chat-style UI for summaries and quizzes
+Backend (Prototype)
+FastAPI (Python 3.11)
+File upload, text extraction, Llama inference
+AI Engine
+Llama.cpp
+Local model runner for summarization & Q&A
+Document Extraction
+pdfminer.six / python-docx
+Converts files to plain text
+Storage
+SQLite / Room DB
+Local data & progress tracking
+Optional Cloud
+FastAPI + Google Cloud
+Sync, analytics, and model scaling
+
+
+3. Repository Structure
+EduNote/
+│
+├── app/
+│   ├── src/
+│   │   ├── main/java/com/edunote/
+│   │   │   ├── ui/         # Compose UI
+│   │   │   ├── data/       # Local DB
+│   │   │   ├── model/      # Data classes
+│   │   │   ├── ai/         # llama.cpp JNI binding (future)
+│   │   │   ├── utils/      # File parsing tools
+│   │   ├── res/
+│   ├── build.gradle
+│
+├── llama.cpp/              # Submodule (C++ compiled for WSL/Android)
+├── models/                 # Contains .gguf quantized models
+├── app/                    # FastAPI backend service
+│   ├── main.py             # API endpoints
+│   ├── extractors.py       # File parsing logic
+│   ├── llama_runner.py     # Llama.cpp subprocess wrapper
+│   ├── requirements.txt    # Dependencies
+│
+└── README.md
+
+
+4. Completed Components
+Backend (FastAPI) Prototype
+Core endpoints:
+POST /upload — Upload PDF/DOCX/TXT → Extracts and previews text.
+
+
+POST /summarize — Calls Llama model to summarize text into 5 bullets + 2-sentence summary.
+
+
+POST /quiz — Generates 5 multiple-choice questions from content.
+
+
+File summary:
+main.py – Defines all endpoints and orchestration.
+
+
+extractors.py – Handles PDF/DOCX text extraction.
+
+
+llama_runner.py – Executes Llama.cpp binary with the desired prompt.
+
+
+
+Python Environment
+Installed dependencies (requirements.txt):
+fastapi==0.95.2
+uvicorn[standard]==0.22.0
+python-multipart==0.0.6
+pdfminer.six==20221105
+python-docx==0.8.11
+pydantic==1.10.12
+requests==2.32.0
+
+Created using:
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+
+Llama.cpp Integration
+Step 1: Repository Setup
+Resolved permission issues under ~/EduNote:
+sudo rm -rf ~/EduNote/llama.cpp
+git clone https://github.com/ggerganov/llama.cpp.git
+
+Step 2: Build System Update
+Llama.cpp transitioned to CMake, replacing the old Makefile build.
+Installed required packages:
+sudo apt install -y cmake ninja-build build-essential libomp-dev pkg-config libcurl4-openssl-dev
+
+Build commands:
+cd ~/EduNote/llama.cpp
+cmake -B build -S . -GNinja -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+
+Binary location:
+ ~/EduNote/llama.cpp/build/main (or build/bin/main depending on version)
+
+Model Configuration
+Default paths set in llama_runner.py:
+LLAMA_MAIN_BIN = "/home/ron/EduNote/llama.cpp/build/main"
+MODEL_PATH = "/home/ron/EduNote/models/tinyllama.gguf"
+
+Model retrieval example:
+wget --header="Authorization: Bearer <HF_TOKEN>" \
+"https://huggingface.co/ggerganov/llama.cpp/resolve/master/models/tiny-llama.gguf" \
+-O ~/EduNote/models/tinyllama.gguf
+
+
+FastAPI Local Test Commands
+Run server:
+cd ~/EduNote/app
+uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+
+Health check:
+curl http://127.0.0.1:8080/
+
+Upload & Summarize:
+curl -F "file=@/path/to/sample.pdf" http://127.0.0.1:8080/upload
+curl -X POST http://127.0.0.1:8080/summarize \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Your extracted text goes here."}'
+
+Generate quiz:
+curl -X POST http://127.0.0.1:8080/quiz \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Your extracted text goes here."}'
+
+
+5. Technical Achievements So Far
+Stage
+Task
+Status
+
+EduNote concept finalized (study assistant with Llama.cpp)
+Complete
+
+Architectural blueprint & phase plan
+Complete
+
+FastAPI backend (upload, summarize, quiz endpoints)
+Complete
+
+PDF/DOCX parsing via pdfminer & python-docx
+Complete
+
+Llama.cpp successfully cloned & configured
+Complete
+
+CMake-based build successful after installing libcurl dev
+Complete
+
+Model download (TinyLlama or Phi)
+In progress
+
+Prompt refinement (bullet summary & MCQ generator)
+Working prototype
+
+Android client (Compose UI, Retrofit integration)
+Planned next
+
+Cloud sync / hosting (Google Cloud reverse proxy)
+Later phase
+
+
+6. Next Implementation Steps
+Validate model run:
+
+ ./build/main -m ~/EduNote/models/tinyllama.gguf -p "Summarize: Biology notes" -n 64
+
+
+Integrate backend with Android client:
+
+
+Use Retrofit for HTTP calls to /upload, /summarize, /quiz.
+
+
+Parse JSON responses into Summary and Quiz data models.
+
+
+Develop Android UI (Phase 2):
+
+
+Jetpack Compose layout for summary + quiz cards.
+
+
+Local Room DB integration for saved progress.
+
+
+Testing & Debugging:
+
+
+Validate summarization accuracy.
+
+
+Add logging middleware to FastAPI for traceability.
+
+
+Ensure secure API handling before public deployment.
+
+
+
+7. Future Enhancements
+Convert /quiz endpoint output into structured JSON.
+
+
+Add token-aware chunking instead of character-based.
+
+
+Implement async llama.cpp runner (reduce startup overhead).
+
+
+Create Docker container for easy deployment.
+
+
+Build optional React test dashboard for web verification.
+
+
+Integrate Google Play compliance (API 35 target, privacy policy, data safety).
+
+
+
+8. Summary of Challenges Resolved
+Issue
+Root Cause
+Resolution
+Permission denied cloning llama.cpp
+Root-owned directory
+Removed with sudo rm -rf and recloned as user
+“No Makefile” error
+Llama.cpp migrated to CMake
+Installed cmake & ninja, rebuilt with new system
+Missing CURL dependency
+libcurl not installed
+Installed libcurl4-openssl-dev
+Undefined Llama binary path
+Relative path confusion
+Set absolute path in llama_runner.py
+PDF parsing errors
+Library fallbacks missing
+Added fallback handling & notes for LibreOffice headless
+
+
+9. Appendix – Reference Commands
+Setup script (condensed)
+sudo apt update
+sudo apt install -y build-essential git cmake ninja-build libomp-dev libcurl4-openssl-dev python3-venv
+
+git clone https://github.com/ggerganov/llama.cpp.git ~/EduNote/llama.cpp
+cd ~/EduNote/llama.cpp
+cmake -B build -S . -GNinja -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+
+Run server
+cd ~/EduNote/app
+source ../venv/bin/activate
+uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+
